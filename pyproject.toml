@@ -1,0 +1,20 @@
+[project]
+name = "my-course-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "langchain>=1.0.0rc2",
+    "langchain-openai>=1.0.0a4",
+    "langgraph>=1.0.0rc1",
+]
+
+[dependency-groups]
+dev = [
+    "langgraph-cli[inmem]>=0.4.4",
+    "ipykernel>=7.0.1",
+]
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
