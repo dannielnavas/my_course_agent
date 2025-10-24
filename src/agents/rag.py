@@ -1,3 +1,4 @@
+from pydantic import BaseModel, Field
 from langgraph.graph import StateGraph, START, END
 import random
 from typing import TypedDict
@@ -24,26 +25,49 @@ llm = llm.bind_tools([file_search_tool])
 
 class State(MessagesState):
     customer_name: str
-    my_age: int
+    phone_number: str
+    age: str
 
 
-def node_1(state: State):
+class ContactInfo(BaseModel):
+    """ Contact information for a person """
+    name: str = Field(description="The name of the person")
+    phone: str = Field(description="The phone number of the person")
+    age: str = Field(description="The age of the person")
+
+
+llm_whith_structured_output = llm.with_structured_output(schema=ContactInfo)
+
+
+def extractor(state: State):
+    customer_name = state.get("customer_name", None)
     new_state: State = {}
-    if state.get("customer_name") is None:
-        new_state["customer_name"] = "Danniel Navas"
-    else:
-        new_state["my_age"] = random.randint(18, 35)
+    history = state["messages"]
+    if customer_name is None or len(history) >= 10:
+        schema = llm_whith_structured_output.invoke(history)
+        new_state["customer_name"] = schema.name
+        new_state["phone_number"] = schema.phone
+        new_state["age"] = schema.age
+    return new_state
+
+
+def conversation(state: State):
+    new_state: State = {}
     history = state["messages"]
     last_message = history[-1]
-    ai_message = llm.invoke(last_message.text)
+    system_message = f"You are a helpful assistant that can answer questions about the customer {state.get('customer_name', 'unknown')}"
+    ai_message = llm.invoke(
+        [('system', system_message), ('user', last_message.text)])
     new_state["messages"] = [ai_message]
     return new_state
 
 
 builder = StateGraph(State)
-builder.add_node("node_1", node_1)
+builder.add_node("conversation", conversation)
+builder.add_node("extractor", extractor)
 
-builder.add_edge(START, "node_1")
-builder.add_edge('node_1', END)
+builder.add_edge(START, "extractor")
+builder.add_edge('extractor', "conversation")
+builder.add_edge('conversation', END)
 
 agent = builder.compile()
