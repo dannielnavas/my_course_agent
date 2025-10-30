@@ -11,6 +11,7 @@ dependencies = [
     "langchain-google-vertexai>=3.0.0",
     "langchain-openai>=1.0.0a4",
     "langgraph>=1.0.0rc1",
+    "pydantic>=2.12.2",
 ]
 
 [dependency-groups]
