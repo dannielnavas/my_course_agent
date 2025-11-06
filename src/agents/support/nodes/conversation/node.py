@@ -3,7 +3,7 @@ from src.agents.support.state import State
 from src.agents.support.nodes.conversation.tools import tools
 from src.agents.support.nodes.conversation.propmt import SYSTEM_PROMPT
 llm = init_chat_model(
-    "gpt-4o-mini",
+    "gpt-4o",
     temperature=1,
 )
 
